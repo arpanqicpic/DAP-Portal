@@ -135,8 +135,6 @@ router.get('/profile', async (req, res) => {
 
 
 
-
-
 router.get('/verificationData', async (req, res) => {
     const distributor_id = 'D123';
     const sector_id = 'S001';
@@ -150,8 +148,7 @@ router.get('/verificationData', async (req, res) => {
             return res.status(404).json({ message: 'Data not found' });
         }
 
-        
-
+    
         const distributorImageFields = [
             { name: "merchant_shop_indoor_image", label: "merchant_shop_indoor_image" },
             { name: "merchant_shop_outdoor_image", label: "merchant_shop_outdoor_image" },

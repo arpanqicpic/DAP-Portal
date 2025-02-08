@@ -8,6 +8,7 @@ const authRoutes = require('./Routes/auth')
 const verifyRoute = require('./Routes/verification')
 const {Middleware} = require('./middleware/authMiddleWare')
 
+
 // Initialize environment variables
 dotenv.config();
 
@@ -39,14 +40,14 @@ app.use(session({
 }));
 
 app.use('/auth', authRoutes);
-app.use('/verify',Middleware,verifyRoute)
+app.use('/verify',verifyRoute)
 
 
 
 
 
 // Start the server
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
