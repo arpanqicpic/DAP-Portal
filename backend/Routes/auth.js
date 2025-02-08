@@ -27,24 +27,71 @@ router.post('/register', async (req, res) => {
 });
 
 
+router.post('/login', async (req, res) => {
+    const { email_id, password } = req.body;
+    console.log(req.body)
+
+    try {
+        const result = await pool.query('select * from iris_sb_test.distributor_login_credentials where email_id = $1', [email_id]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const user = result.rows[0];
+        // console.log(user)
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            return res.status(401).json({ message: 'Invalid distributor ID or password' });
+        }
+            // console.log(req.sessionID)
+        
+        // Set session ID in the cookie
+        res.cookie('session_id', req.sessionID, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production', // Set to true only in production with HTTPS
+            maxAge: 3600000, // 1 hour
+        });
+        console.log("Cookies session set after login:", req.cookies);
+
+        // Set user ID in the cookie
+        res.cookie('user_id', user.distributor_id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Set to true only in production with HTTPS
+            // maxAge: 3600000, // 1 hour
+        });
+
+        console.log("Cookies  user set after login:", req.cookies);
+
+        res.status(200).json({ message: 'Login successful' });
+    } catch (err) {
+        console.error('Login error:', err); // Log the error for debugging
+        res.status(500).json({ message: 'Error logging in', error: err.message });
+    }
+}
+
+
+);
+
 // router.post('/login', async (req, res) => {
 //     const { email_id, password } = req.body;
-//     console.log(req.body)
+//     console.log(req.body);
 
 //     try {
-//         const result = await pool.query('select * from iris_sb_test.distributor_login_credentials where email_id = $1', [email_id]);
+//         const result = await pool.query('SELECT * FROM iris_sb_test.distributor_login_credentials WHERE email_id = $1', [email_id]);
+        
 //         if (result.rows.length === 0) {
 //             return res.status(401).json({ message: 'Invalid distributor ID or password' });
 //         }
 
 //         const user = result.rows[0];
-//         console.log(user)
+//         console.log(user);
+
 //         const match = await bcrypt.compare(password, user.password);
 
 //         if (!match) {
 //             return res.status(401).json({ message: 'Invalid distributor ID or password' });
 //         }
-//             console.log(req.sessionID)
         
 //         // Set session ID in the cookie
 //         res.cookie('sessionID', req.sessionID, {
@@ -52,13 +99,12 @@ router.post('/register', async (req, res) => {
 //             secure: process.env.SESSION_SECRET === 'production', // Set to true only in production with HTTPS
 //             maxAge: 3600000, // 1 hour
 //         });
-//         console.log("Cookies set after login:", req.cookies);
 
 //         // Set user ID in the cookie
 //         res.cookie('user_id', user.distributor_id, {
 //             httpOnly: true,
 //             secure: process.env.SESSION_SECRET === 'production', // Set to true only in production with HTTPS
-//             // maxAge: 3600000, // 1 hour
+//             maxAge: 3600000, // 1 hour
 //         });
 
 //         console.log("Cookies set after login:", req.cookies);
@@ -68,53 +114,7 @@ router.post('/register', async (req, res) => {
 //         console.error('Login error:', err); // Log the error for debugging
 //         res.status(500).json({ message: 'Error logging in', error: err.message });
 //     }
-// }
-
-
-// );
-
-router.post('/login', async (req, res) => {
-    const { email_id, password } = req.body;
-    console.log(req.body);
-
-    try {
-        const result = await pool.query('SELECT * FROM iris_sb_test.distributor_login_credentials WHERE email_id = $1', [email_id]);
-        
-        if (result.rows.length === 0) {
-            return res.status(401).json({ message: 'Invalid distributor ID or password' });
-        }
-
-        const user = result.rows[0];
-        console.log(user);
-
-        const match = await bcrypt.compare(password, user.password);
-
-        if (!match) {
-            return res.status(401).json({ message: 'Invalid distributor ID or password' });
-        }
-        
-        // Set session ID in the cookie
-        res.cookie('sessionID', req.sessionID, {
-            httpOnly: true,
-            secure: process.env.SESSION_SECRET === 'production', // Set to true only in production with HTTPS
-            maxAge: 3600000, // 1 hour
-        });
-
-        // Set user ID in the cookie
-        res.cookie('user_id', user.distributor_id, {
-            httpOnly: true,
-            secure: process.env.SESSION_SECRET === 'production', // Set to true only in production with HTTPS
-            maxAge: 3600000, // 1 hour
-        });
-
-        console.log("Cookies set after login:", req.cookies);
-
-        res.status(200).json({ message: 'Login successful' });
-    } catch (err) {
-        console.error('Login error:', err); // Log the error for debugging
-        res.status(500).json({ message: 'Error logging in', error: err.message });
-    }
-});
+// });
 
 
 router.post('/logout', (req, res) => {
