@@ -6,7 +6,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const authRoutes = require('./Routes/auth')
 const verifyRoute = require('./Routes/verification')
-// const {Middleware} = require('./middleware/authMiddleWare')
+const {Middleware} = require('./middleware/authMiddleWare')
 
 // Initialize environment variables
 dotenv.config();
@@ -39,7 +39,7 @@ app.use(session({
 }));
 
 app.use('/auth', authRoutes);
-app.use('/verify',verifyRoute)
+app.use('/verify',Middleware,verifyRoute)
 
 
 
