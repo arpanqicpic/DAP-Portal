@@ -1,96 +1,97 @@
-// const { pool } = require('../db/db'); // Ensure correct import
+// const jwt = require('jsonwebtoken');
+// const Session = require('../models/sessionModel');
 
-// const Middleware = (req, res, next) => {
-//     console.log("Middleware: Checking authentication");
-//     const cookie = cookie || {}; // Safe fallback for cookies
-//     const { session_id, email_id } = cookie;
-//     // console.log(req)
-//     console.log("sessionId", req.sessionID); // Debugging cookies
-//     console.log('User ID:', email_id);
+// const authenticate = async (req, res, next) => {
+
+//   console.log(req)
+
+//   const token = req.cookies.jwt;
+
+//   // console.log("token-",token)
+
+//   if (!token) {
+//     return res.status(403).json({ message: 'Access Denied. No token provided.' });
+//   }
+
+//   try {
+//     const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+//     // Check if the session exists
+//     const session = await Session.findSessionByEmpId(verified.emp_id);
     
 
-//     async function sessionVerify(sessionID, email_id) {
-//         try {
-//             const result = await pool.query('SELECT session_id FROM sesusers WHERE distributor_id = $1', [email_id]);
-//             if (result.rows.length > 0 && result.rows[0].session_id === sessionID) {
-//                 return true;
-//             } else {
-//                 return false;
-//             }
-//         } catch (err) {
-//             console.error("Error in sessionVerify:", err);
-//             return false;
-//         }
+//     if (!session || session.session_token !== token) {
+//       return res.status(403).json({ message: 'Session expired or invalid.' });
 //     }
-
-//     if (session_id) {
-//         sessionVerify(session_id).then(isValid => {
-//             if (isValid) {
-//                 console.log("Authenticated user found. Proceeding...");
-//                 return next();
-//             } else {
-//                 console.log("Session Expired");
-//                 return res.status(401).json({ message: 'Session expired. Please log in again.' });
-//             }
-//         }).catch(err => {
-//             console.error("Error in session verification:", err);
-//             return res.status(500).json({ message: 'Error verifying session.' });
-//         });
-//     } else {
-//         console.log("User is not authenticated.");
-//         return res.status(401).json({ message: 'Unauthorized. Please log in to access this resource.' });
+//     // Check for inactivity (1 hour)
+//     const lastActivity = new Date(session.last_activity);
+//     const now = new Date();
+//     if (now - lastActivity > 60 * 60 * 1000) {
+//       await Session.deleteSessionByEmpId(verified.emp_id);
+//       return res.status(403).json({ message: 'Session expired due to inactivity.' });
 //     }
+//     // Update last activity timestamp
+//     await Session.updateLastActivity(verified.emp_id);
+//     req.user = verified;
+//     next();
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).json({ message: 'Invalid token.' });
+//   }
 // };
 
-// module.exports = { Middleware };
+// module.exports = authenticate;
 
 
 
+const jwt = require('jsonwebtoken');
+const Session = require('../controller/sessionContoller');
 
-const { pool } = require('../db/db'); // Ensure correct import
+const authenticate = async (req, res, next) => {
+  const token = req.cookies.jwt;
+  
 
-const Middleware = (req, res, next) => {
-    console.log("Middleware: Checking authentication");
+  if (!token) {
+    return res.status(403).json({ message: 'Access Denied. No token provided.' });
+  }
 
-    // Safely get cookies and fallback to empty object if undefined
-    const { sessionID, user_id } = req.cookies;
+  try {
+    // Verify JWT
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Debugging logs
-    console.log("Cookies: ", req.cookies); // Log entire cookies object
-
-    // Verify session in the database
-    async function sessionVerify(sessionID, user_id) {
-        try {
-            const result = await pool.query('SELECT session_id FROM sesusers WHERE distributor_id = $1', [user_id]);
-            if (result.rows.length > 0 && result.rows[0].session_id === sessionID) {
-                return true; // Session is valid
-            } else {
-                return false; // Session is not valid
-            }
-        } catch (err) {
-            console.error("Error in sessionVerify:", err);
-            return false; // Error in session verification
-        }
+    // Check if the session exists for the user
+    const session = await Session.findSessionByEmpId(verified.emp_id);
+    if (!session || session.session_token !== token) {
+      return res.status(403).json({ message: 'Session expired or invalid.' });
     }
 
-    // Check if session ID and user_id exist in cookies
-    if (sessionID && user_id) {
-        sessionVerify(sessionID, user_id).then(isValid => {
-            if (isValid) {
-                console.log("Authenticated user found. Proceeding...");
-                return next(); // Proceed to the next middleware or route handler
-            } else {
-                console.log("Session expired or invalid.");
-                return res.status(401).json({ message: 'Session expired or invalid. Please log in again.' });
-            }
-        }).catch(err => {
-            console.error("Error in session verification:", err);
-            return res.status(500).json({ message: 'Error verifying session.' });
-        });
-    } else {
-        console.log("User is not authenticated. Missing session ID or user_id.");
-        return res.status(401).json({ message: 'Unauthorized. Please log in to access this resource.' });
+    // Check for token expiration date
+    const now = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+    if (verified.exp < now) {
+      return res.status(403).json({ message: 'Token has expired.' });
     }
+
+    // Check for inactivity (1 hour timeout)
+    const lastActivity = new Date(session.last_activity).getTime();
+    const currentTime = Date.now();
+    if (currentTime - lastActivity > 60 * 60 * 1000) {
+      // Session expired due to inactivity
+      await Session.deleteSessionByEmpId(verified.emp_id);
+      return res.status(403).json({ message: 'Session expired due to inactivity.' });
+    }
+
+    // Update the last activity timestamp for the session
+    await Session.updateLastActivity(verified.emp_id);
+
+    // Attach user info to the request object
+    req.user = verified;
+
+    // Proceed to the next middleware/route handler
+    next();
+  } catch (err) {
+    console.error('Authentication error:', err);
+    return res.status(400).json({ message: 'Invalid token.' });
+  }
 };
 
-module.exports = { Middleware };
+module.exports = authenticate;

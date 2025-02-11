@@ -7,18 +7,18 @@ import { useNavigate } from 'react-router-dom'
 
 
 function Login() {
-  const [email_id, setEmail] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   let navigate=useNavigate()
   const HandleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log("Logging in with:", { email_id, password });
+      console.log("Logging in with:", { email, password });
   
       const response = await axios.post(
         'http://localhost:5000/auth/login',
-        { email_id, password },
+        { email, password },
         { withCredentials: true }  // Ensures cookies are sent and received
       );
   
@@ -49,7 +49,7 @@ function Login() {
           <div className="w-full mb-2 z-40 border-2 rounded-lg">
             <input
               type="email"
-              value={email_id}
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Enter email ID"
