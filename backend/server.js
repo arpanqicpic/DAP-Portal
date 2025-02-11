@@ -4,6 +4,7 @@ const session = require('express-session');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const authRoutes = require('./Routes/auth')
 const verifyRoute = require('./Routes/verification')
 // const {Middleware} = require('./middleware/authMiddleWare')
@@ -13,6 +14,8 @@ dotenv.config();
 
 // Initialize the express app
 const app = express();
+
+app.use(cookieParser())
 
 
 app.use(cors({ 
@@ -40,10 +43,6 @@ app.use(session({
 
 app.use('/auth', authRoutes);
 app.use('/verify',verifyRoute)
-
-
-
-
 
 // Start the server
 const PORT = process.env.PORT || 5001;
