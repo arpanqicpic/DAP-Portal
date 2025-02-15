@@ -9,16 +9,16 @@ const s3Client = new S3Client({
   }
 });
 // Function to generate a pre-signed URL for an S3 object
-const getImageUrl = async (bucketName, foldername, fileName) => {
+const getImageUrl = async (bucketName,  fileName) => {
   const params = {
     Bucket: bucketName,
-    Key: `${foldername}/${fileName}`,
+    Key: fileName,
   };
   try {
     // Create a GetObjectCommand to retrieve the file from S3
     const command = new GetObjectCommand(params);
     // Generate the pre-signed URL with an expiration time (optional)
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // Expires in 1 hour
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
     return url;
   } catch (error) {
     console.error('Error generating pre-signed URL:', error);
@@ -26,3 +26,4 @@ const getImageUrl = async (bucketName, foldername, fileName) => {
   }
 };
 module.exports= {getImageUrl}
+

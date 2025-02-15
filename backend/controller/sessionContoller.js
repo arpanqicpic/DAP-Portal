@@ -1,14 +1,14 @@
 const { query } = require('../db/db');
 
 const Session = {
-  async createSession({ session_id, emp_id, token, created_at, updated_at }) {
+  async createSession({ session_id, email, token, created_at, updated_at }) {
     try {
       
       const sql = `
         INSERT INTO iris_sb_test.sessions
-        (user_id, session_token, created_at, updated_at, last_activity) 
+        (email, session_token, created_at, updated_at, last_activity) 
         VALUES ($1, $2, $3, $4, $5) RETURNING *`;
-      const params = [emp_id, token, created_at, updated_at, new Date()];
+      const params = [email, token, created_at, updated_at, new Date()];
       const result = await query(sql, params);
       
       return result.rows[0];
@@ -18,10 +18,10 @@ const Session = {
     }
   },
 
-  async findSessionByEmpId(emp_id) {
+  async findSessionByEmpId(email) {
     try {
-      const sql = `SELECT * FROM iris_sb_test.sessions WHERE user_id = $1`;
-      const params = [emp_id];
+      const sql = `SELECT * FROM iris_sb_test.sessions WHERE email = $1`;
+      const params = [email];
       const result = await query(sql, params);
       return result.rows[0];
     } catch (error) {
@@ -30,12 +30,12 @@ const Session = {
     }
   },
 
-  async deleteSessionByEmpId(emp_id) {
+  async deleteSessionByEmpId(email) {
     try {
 
       console.log("I am in delete session")
-      const sql = `DELETE FROM iris_sb_test.sessions WHERE user_id = $1`;
-      const params = [emp_id];
+      const sql = `DELETE FROM iris_sb_test.sessions WHERE email = $1`;
+      const params = [email];
       const resses = await query(sql, params);
       console.log(resses)
       return true;
@@ -45,10 +45,10 @@ const Session = {
     }
   },
 
-  async updateLastActivity(emp_id) {
+  async updateLastActivity(email) {
     try {
-      const sql = `UPDATE iris_sb_test.sessions SET last_activity = $1 WHERE user_id = $2`;
-      const params = [new Date(), emp_id];
+      const sql = `UPDATE iris_sb_test.sessions SET last_activity = $1 WHERE email = $2`;
+      const params = [new Date(), email];
       await query(sql, params);
     } catch (error) {
       console.error('Error in updateLastActivity:', error.message);
