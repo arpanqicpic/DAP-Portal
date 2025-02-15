@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const authRoutes = require('./Routes/auth')
+const authRoutes = require('./Routes/auth');
 const verifyRoute = require('./Routes/verification')
 // const {Middleware} = require('./middleware/authMiddleWare')
 
@@ -16,17 +16,13 @@ dotenv.config();
 const app = express();
 
 app.use(cookieParser())
-
-
 app.use(cors({ 
     origin: 'http://localhost:3000', // Replace with the exact origin of your frontend
     methods: ['GET', 'POST', 'PUT', 'PATCH'],
-    credentials: true,
-  
+    credentials: true,  
 }));
 
 app.use(bodyParser.json()); // To parse JSON data from incoming requests
-
 
 // Set up session middleware
 
@@ -42,11 +38,11 @@ app.use(session({
 }));
 
 app.use('/auth', authRoutes);
-app.use('/verify',verifyRoute)
+app.use('/verify',verifyRoute);
 
 // Start the server
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
 

@@ -270,24 +270,18 @@ router.post('/register', async (req, res) => {
 });
 
 
-
-
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-  
-  
     try {
       const user = await User.findByEmail(email);
       if (!user) {
         return res.status(400).json({ message: 'Invalid credentials.' });
       }
-  
-      // Decrypt the stored password
+
       const bytes = CryptoJS.AES.decrypt(user.password, process.env.SECRET_KEY);
       console.log(process.env.SECRET_KEY)
       const decryptedPassword = bytes.toString(CryptoJS.enc.Utf8);
   
-      // Compare decrypted password with the input password
       if (decryptedPassword !== password) {
         console.log("Password not mathed")
         return res.status(400).json({ message: 'Invalid credentials.' });
@@ -296,7 +290,7 @@ router.post('/login', async (req, res) => {
       // Invalidate previous session
       console.log("Password Matched")
 
-      const sesres = await Session.deleteSessionByEmpId(user.emp_id);
+      const sesres = await Session.deleteSessionByEmpId(user.email);
   
       console.log(
 
@@ -309,13 +303,13 @@ router.post('/login', async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
+
   
-  
+
       // Create a new session
       const session_id = `${user.emp_id}_${Date.now()}`;
       const created_at = new Date();
       const updated_at = created_at;
-  
       await Session.createSession({
         session_id,
         emp_id: user.emp_id,
@@ -337,7 +331,7 @@ router.post('/login', async (req, res) => {
 
 
 // Logout route
-router.post('/logout', authenticate, async (req, res) => {
+router.post('/logout', async (req, res) => {
     try {
         const { emp_id } = req.user;
         console.log(emp_id)
